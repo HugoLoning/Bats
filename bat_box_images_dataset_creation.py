@@ -1,4 +1,4 @@
-"""Module for turning a combined imagej output file into a dataset
+"""Module for turning a combined imagej output file into a dataset. Be sure to use python3 when running this code.
 By Hugo Loning 2016
 """
 
@@ -25,7 +25,7 @@ def load_imagej_array(imagej_file):
             transect, box, year, month, day, area_type = extract_info(filename)
             if box == 75 or box == 78:  # box 75 and 78 are actually 45 and 48
                 box -= 30
-            ij_array += [[transect, box, year, month, day, curr_area, area_type]]
+            ij_array.append([transect, box, year, month, day, curr_area, area_type])
     return ij_array
 
 
@@ -47,14 +47,15 @@ def create_imagej_dataset(imagej_file):
 
     # add additional info per measurement
     tr_array = load_transects_array()
-    for i in range(len(ij_dataset)):
-        transect, box, year, month, day, tot_pix, poo_pix = ij_dataset[i]
-        site, colour = tr_array[transect-1][1], tr_array[transect-1][3]
-        area_ratio = float(poo_pix) / float(tot_pix)
-        ij_dataset[i] = [site, transect, box, colour, year, month, day, poo_pix, tot_pix, area_ratio]
+    final_ij_dataset = []
+    for row in ij_dataset:
+        transect, box, year, month, day, tot_pix, poo_pix = row
+        site, *rest, colour = tr_array[transect - 1][1:4]
+        area_ratio = poo_pix / tot_pix
+        final_ij_dataset.append([site, transect, box, colour, year, month, day, poo_pix, tot_pix, area_ratio])
     column_names = ['site', 'transect', 'box', 'colour', 'year', 'month', 'day', 'particle_area',
                     'total_area', 'area_ratio']
-    return ij_dataset, column_names
+    return final_ij_dataset, column_names
 
 
 # The script is here

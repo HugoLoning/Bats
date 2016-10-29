@@ -1,8 +1,9 @@
 """Module for creating a feeding buzz dataset from sonochiro output file for the Light on Nature project.
-By Hugo Loning 2016
+Be sure to use python3 when running this code. By Hugo Loning 2016
 """
 
 from sonochiro_dataset_creation import load_sonochiro_file, load_transects_array, write_array
+from collections import defaultdict
 import time
 
 
@@ -14,33 +15,29 @@ def filter_sonochiro_array(sonochiro_array, filter_id="PippiT"):
 
 def find_nights_per_site(sonochiro_array):
     """Return a dict with per site a list of all nights"""
-    nights = {}
-    for i in range(1, 9):  # for each site
-        nights[i] = []  # create site as key for an empty list which will contain all the nights
+    nights = defaultdict(list)  # create an empty list for each key (site) to contain all the nights
     for row in sonochiro_array:
         site, night = row[2], row[4]
         if night not in nights[site]:
-            nights[site] += [night]
+            nights[site].append(night)
     return nights
 
 
 def create_empty_fb_dict(nights_dict):
     """Return a dict with per transect an entry for each night, total and feeding buzz initialised at 0"""
     tr_array = load_transects_array()
-    fb_dict = {}
+    fb_dict = defaultdict(list)
     for row in tr_array:
-        transect, site, colour = row[0], row[1], row[3]
-        fb_dict[transect] = []
-        for i in range(len(nights_dict[site])):
-            night = nights_dict[site][i]
-            fb_dict[transect] += [[site, transect, colour, night, 0, 0]]
+        transect, site, *rest, colour = row[:4]
+        for night in nights_dict[site]:
+            fb_dict[transect].append([site, transect, colour, night, 0, 0])
     return fb_dict
 
 
 def lookup_night_index(nights_dict, site, night):
     """Return the index as int of given night corresponding to given site in the nights list of nights_dict"""
-    for index in range(len(nights_dict[site])):
-        if nights_dict[site][index] == night:
+    for index, current_night in enumerate(nights_dict[site]):
+        if current_night == night:
             return index
 
 

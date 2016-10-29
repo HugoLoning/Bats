@@ -3,6 +3,7 @@ By Hugo Loning 2016
 """
 
 from sonochiro_dataset_creation import convert_to_sec, load_sun_data_array, lookup_sun_data_array, write_array
+from collections import defaultdict
 import time
 
 # The functions
@@ -15,12 +16,11 @@ def array_from_input(jip_sc_file):
         for line in input_file:
             if line.startswith("File;"):  # if it's the header
                 continue
-            else:  # find all the data and assign them to variables
-                line = line.strip().split(";")
-                line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line]  # convert to int if possible
-                year, month, day, hour, minute, second = line[2:8]
-                line[2:8] = [convert_to_sec(year, month, day, hour, minute, second)]  # replace ymdhms by total in sec's
-                array += [line]
+            line = line.strip().split(";")
+            line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line]  # convert to int if possible
+            year, month, day, hour, minute, second = line[2:8]
+            line[2:8] = [convert_to_sec(year, month, day, hour, minute, second)]  # replace ymdhms by total in sec's
+            array += [line]
     return array
 
 
@@ -30,15 +30,13 @@ def find_min_max_per_transect(jip_sc_array):
     """
     min_max_dict = {}
     for row in jip_sc_array:
-        transect = row[1]
-        total_time = row[2]
+        transect, total_time = row[1:3]
         if transect not in min_max_dict:
             min_max_dict[transect] = [total_time, total_time]
-        else:
-            if total_time < min_max_dict[transect][0]:
-                min_max_dict[transect][0] = total_time
-            elif total_time > min_max_dict[transect][1]:
-                min_max_dict[transect][1] = total_time
+        if total_time < min_max_dict[transect][0]:
+            min_max_dict[transect][0] = total_time
+        elif total_time > min_max_dict[transect][1]:
+            min_max_dict[transect][1] = total_time
     return min_max_dict
 
 
@@ -64,15 +62,14 @@ def create_empty_comparison_dict(jip_sc_array, sec_per_unit):
     """
     entry_dict = find_num_of_entries_per_transect(jip_sc_array, sec_per_unit)
     sun_data = load_sun_data_array()
-    empty_dict = {}
+    empty_dict = defaultdict(list)
     for transect in entry_dict:
-        empty_dict[transect] = []
         start_time = entry_dict[transect][0]
         entries_needed = entry_dict[transect][1]
         for entry_num in range(entries_needed):
             curr_time = start_time + entry_num * sec_per_unit
             night = lookup_sun_data_array(sun_data, curr_time)
-            empty_dict[transect] += [[transect, night, curr_time, 0, 0, 0, 0]]
+            empty_dict[transect].append([transect, night, curr_time, 0, 0, 0, 0])
     return empty_dict
 
 
@@ -86,9 +83,9 @@ def create_comparison_dict(jip_sc_array, min_per_unit, buzz_index):
     comparison_dict = create_empty_comparison_dict(jip_sc_array, sec_per_unit)
     entries_dict = find_num_of_entries_per_transect(jip_sc_array, sec_per_unit)
     for row in jip_sc_array:
-        transect = row[1]
+        transect, total_time = row[1:3]
         start_time = entries_dict[transect][0]
-        time_index = (row[2] - start_time) // sec_per_unit
+        time_index = (total_time - start_time) // sec_per_unit
         if row[5] == 1:  # if Jip scored a buzz
             comparison_dict[transect][time_index][3] += 1
         comparison_dict[transect][time_index][4] += row[4]  # add all ibuzzes
@@ -96,7 +93,6 @@ def create_comparison_dict(jip_sc_array, min_per_unit, buzz_index):
             comparison_dict[transect][time_index][5] += 1
         if row[4] >= buzz_index:  # if feeding buzz index is higher than threshold
             comparison_dict[transect][time_index][6] += 1  # count file with sufficient buzz index
-
     return comparison_dict
 
 

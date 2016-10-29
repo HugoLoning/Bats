@@ -1,5 +1,5 @@
-"""Module for turning dataset from bats in bat boxes into complete datasets
-By Hugo Loning 2016
+"""Module for turning dataset from bats in bat boxes into complete datasets.
+Be sure to use python3 when running this code. By Hugo Loning 2016
 """
 
 from sonochiro_dataset_creation import load_transects_array, write_array
@@ -13,27 +13,26 @@ def load_bats_in_boxes_file(filename):
         for line in bats_file:
             if line.startswith("transect;box"):  # if it's the header
                 continue
-            else:
-                # strip and split the line on ; and convert all possible items into int
-                line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line.strip().split(';')]
-                # convert bat measurements to float
-                try:
-                    line[9], line[10] = float(line[9]), float(line[10])
-                except ValueError:  # this will run, unless empty or NA or a case of a value of '>20'
-                    pass
-                # fix box numbering of 75 and 78
-                if line[1] == 75 or line[1] == 78:  # box  75 is actually 45, just a new door, same for 78 and 48
-                    line[1] -= 30
-                # remove marked individuals
-                if line[-1].startswith('marked'):  # if individual already caught before on that day
-                    line[6:] = [0, '', '', '', '', '']  # clear the entry
-                # add some additional info
-                transect = line[0]
-                site, colour = tr_array[transect-1][1], tr_array[transect-1][3]
-                line.insert(0, site)
-                line.insert(3, colour)
-                bats_array += [line]
-    return bats_array
+            # strip and split the line on ; and convert all possible items into int
+            line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line.strip().split(';')]
+            # convert bat measurements to float
+            try:
+                line[9], line[10] = float(line[9]), float(line[10])
+            except ValueError:  # this will run, unless empty or NA or a case of a value of '>20'
+                pass
+            # fix box numbering of 75 and 78
+            if line[1] == 75 or line[1] == 78:  # box  75 is actually 45, just a new door, same for 78 and 48
+                line[1] -= 30
+            # remove marked individuals
+            if line[-1].startswith('marked'):  # if individual already caught before on that day
+                line[6:] = [0, '', '', '', '', '']  # clear the entry
+            # add some additional info
+            transect = line[0]
+            site, *rest, colour = tr_array[transect-1][1:4]
+            line.insert(0, site)
+            line.insert(3, colour)
+            bats_array.append(line)
+    return bats_array  # [site, transect, box, colour, day, month, year, poo, animals, species, sex, ual, mass, remarks]
 
 
 def create_data_dict(bats_array):
@@ -43,23 +42,14 @@ def create_data_dict(bats_array):
         site, transect, box, colour = row[:4]
         poo, nr, species = row[7:10]
         remark = row[-1]
-        if transect not in data_dict:
-            bat_poo = poo
-            pp_poo = 0
-            if not remark.startswith('poo'):  # all remarks starting with poo indicate that the poo is not of Pp
-                pp_poo = poo
-            bats = nr
-            pp = 0
-            if species == 'pp':
-                pp = nr
-            data_dict[transect] = [site, transect, colour, pp_poo, bat_poo, pp, bats]
-        else:
-            data_dict[transect][4] = data_dict[transect][4] or poo  # update bat_poo
-            if not remark.startswith('poo'):
-                data_dict[transect][3] = data_dict[transect][3] or poo  # update pp_poo
-            data_dict[transect][6] += nr  # update number of bats
-            if species == 'pp':
-                data_dict[transect][5] += nr  # update number of Pippistrellus pippistrellus
+        if transect not in data_dict:  # add it
+            data_dict[transect] = [site, transect, colour, 0, 0, 0, 0]  # [site, tr, clr, pp_poo, bat_poo, pp, bats]
+        data_dict[transect][4] = data_dict[transect][4] or poo  # update bat_poo
+        if not remark.startswith('poo'):  # all remarks starting with poo indicate that the poo is not of Pp
+            data_dict[transect][3] = data_dict[transect][3] or poo  # update pp_poo
+        data_dict[transect][6] += nr  # update number of bats
+        if species == 'pp':
+            data_dict[transect][5] += nr  # update number of Pippistrellus pippistrellus
     return data_dict
 
 
@@ -70,7 +60,7 @@ def create_data_array(bats_array):
     data_dict = create_data_dict(bats_array)
     data_array = []
     for tr in data_dict:
-        data_array += [data_dict[tr]]
+        data_array.append(data_dict[tr])
     col_names = ['site', 'transect', 'colour', 'pp_poo', 'bat_poo', 'pp', 'bats']
     return data_array, col_names
 
@@ -85,11 +75,11 @@ def create_body_measurement_array(bats_array):
         if sex != '':  # if it's a measured bat
             bci_row = row[:-1]  # copy everything but the remark
             try:
-                bci_row += [(mass / ual)]
+                bci_row.append(mass / ual)
             except TypeError:
-                bci_row += ['NA']
+                bci_row.append('NA')
             del bci_row[7:9]  # remove information of poo and number of animals (always 1)
-            meas_array += [bci_row]
+            meas_array.append(bci_row)
     col_names = ['site', 'transect', 'box', 'colour', 'day', 'month', 'year', 'species', 'sex', 'ual', 'mass', 'bci']
     return meas_array, col_names
 
@@ -97,21 +87,19 @@ def create_body_measurement_array(bats_array):
 def create_sex_counted_array(bats_array):
     """Return a dataset array with counted bats of which sex is known, also return header names"""
     sex_counted_dict = {}
-    tr_array = load_transects_array()
-    for tr in tr_array:  # create entry for each transect
-        transect, site, colour = tr[0], tr[1], tr[3]
-        sex_counted_dict[transect] = [transect, site, colour, 0, 0]
     for row in bats_array:
-        transect, species, sex = row[1], row[9], row[10]
+        site, transect, colour, *rest, species, sex = row[:11]
+        if transect not in sex_counted_dict:
+            sex_counted_dict[transect] = [transect, site, colour, 0, 0]
         if sex == 'male' and species == 'pp':  # count males
             sex_counted_dict[transect][3] += 1
         elif sex == 'female' and species == 'pp':  # count females
             sex_counted_dict[transect][4] += 1
     sex_counted_array = []
-    for i in sex_counted_dict.values():
-        transect, site, colour, male, female = i
-        sex_counted_array += [[transect, site, colour, 'male', male]]
-        sex_counted_array += [[transect, site, colour, 'female', female]]
+    for value in sex_counted_dict.values():
+        transect, site, colour, male, female = value
+        sex_counted_array.append([transect, site, colour, 'male', male])
+        sex_counted_array.append([transect, site, colour, 'female', female])
     col_names = ['transect', 'site', 'colour', 'sex', 'pp']
     return sex_counted_array, col_names
 
