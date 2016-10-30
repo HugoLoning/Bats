@@ -1,6 +1,5 @@
 """Python module for turning SonoChiro output into a functional datafile (csv format) for the
-Light on Nature project. Be sure to use python3 when running this code.
-By Hugo Loning, 2016
+Light on Nature project. By Hugo Loning, 2016
 """
 
 from collections import defaultdict
@@ -90,19 +89,18 @@ def convert_to_sec(year, month, day, hour, minute, second):
 
 
 def load_transects_array():
-    """Return an array of the transects.csv file which should be in the same directory"""
-    transects = []
+    """Return a dictionary (transects:[site,colour]) of the transects.csv file which should be in the same directory"""
+    transects = defaultdict(list)
     with open("transects.csv") as input_file:
         for line in input_file:
             match = re.search(r'([0-9]+),([0-9]+),(.+?),([a-z]+),([0-9]+?)-([0-9]+?)-([0-9]+?)\n', line)
-            transect, site, start_year, start_month, start_day = [int(elem) for elem in match.group(1, 2, 5, 6, 7)]
-            name, colour = match.group(3, 4)
-            transects.append([transect, site, name, colour, start_year, start_month, start_day])
-    return transects
+            transect, site, colour = [elem.isdigit() and int(elem) or elem for elem in match.group(1, 2, 4)]
+            transects[transect].extend([site, colour])
+    return dict(transects)
 
 
 def load_sun_data_array():
-    """Return an array of the SunData.csv file which should be in the same directory"""
+    """Return a list containing converted time of noon of the SunData.csv file which should be in the same directory"""
     sun_data = []
     with open("SunData.csv") as input_file:
         for line in input_file:
@@ -138,7 +136,7 @@ def load_allowed_nights():
         for line in input_file:
             site, night = [int(elem) for elem in line.split(",")[:2]]
             allowed[site].append(night)
-    return allowed
+    return dict(allowed)
 
 
 def load_lights_off(sun_data_array):
@@ -156,7 +154,7 @@ def load_lights_off(sun_data_array):
                 night = lookup_sun_data_array(sun_data_array, converted)
                 for site in site_codes[site_code]:
                     light_off[site].append(night)
-    return light_off
+    return dict(light_off)
 
 
 # Main loading and writing function
@@ -188,7 +186,7 @@ def load_sonochiro_file(sonochiro_file):
             total_time_sec = convert_to_sec(year, month, day, hour, minute, second)
             night = lookup_sun_data_array(sun_data, total_time_sec)
             transect, detector, comp_fl = extract_tr_d_cf(filename)
-            site, *rest, colour = tr_array[transect - 1][1:4]
+            site, colour = tr_array[transect]
             if night not in allowed_nights[site] or night in lights_off[site]:
                 excluded_total += 1
                 continue

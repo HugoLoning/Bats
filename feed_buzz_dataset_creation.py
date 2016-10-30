@@ -1,5 +1,5 @@
 """Module for creating a feeding buzz dataset from sonochiro output file for the Light on Nature project.
-Be sure to use python3 when running this code. By Hugo Loning 2016
+By Hugo Loning 2016
 """
 
 from sonochiro_dataset_creation import load_sonochiro_file, load_transects_array, write_array
@@ -27,8 +27,8 @@ def create_empty_fb_dict(nights_dict):
     """Return a dict with per transect an entry for each night, total and feeding buzz initialised at 0"""
     tr_array = load_transects_array()
     fb_dict = defaultdict(list)
-    for row in tr_array:
-        transect, site, *rest, colour = row[:4]
+    for transect in tr_array:
+        site, colour = tr_array[transect]
         for night in nights_dict[site]:
             fb_dict[transect].append([site, transect, colour, night, 0, 0])
     return fb_dict

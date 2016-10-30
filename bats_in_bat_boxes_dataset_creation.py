@@ -28,7 +28,7 @@ def load_bats_in_boxes_file(filename):
                 line[6:] = [0, '', '', '', '', '']  # clear the entry
             # add some additional info
             transect = line[0]
-            site, *rest, colour = tr_array[transect-1][1:4]
+            site, colour = tr_array[transect]
             line.insert(0, site)
             line.insert(3, colour)
             bats_array.append(line)

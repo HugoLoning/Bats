@@ -1,4 +1,4 @@
-"""Module for turning a combined imagej output file into a dataset. Be sure to use python3 when running this code.
+"""Module for turning a combined imagej output file into a dataset.
 By Hugo Loning 2016
 """
 
@@ -49,7 +49,7 @@ def create_imagej_dataset(imagej_file):
     final_ij_dataset = []
     for row in ij_dataset:
         transect, box, year, month, day, tot_pix, poo_pix = row
-        site, *rest, colour = tr_array[transect - 1][1:4]
+        site, colour = tr_array[transect]
         area_ratio = poo_pix / tot_pix
         final_ij_dataset.append([site, transect, box, colour, year, month, day, poo_pix, tot_pix, area_ratio])
     column_names = ['site', 'transect', 'box', 'colour', 'year', 'month', 'day', 'particle_area',
