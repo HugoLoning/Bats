@@ -38,12 +38,11 @@ def extract_tr_d_cf(filename):
 
 
 def extract_species_sound(line):
-    """Extract all classification parameters from splitted sonochiro output line and return them in a list"""
-    final_id, contact, group, group_index, species, species_index = line[2:8]
-    group_index, species_index = int(group_index), int(species_index)
-    nb_calls, med_freq, med_int, i_qual, i_sc, i_buzz = [int(elem) for elem in line[17:]]
-    return [final_id, contact, group, group_index, species, species_index,
-            nb_calls, med_freq, med_int, i_qual, i_sc, i_buzz]
+    """Extract all classification parameters from splitted sonochiro output line and return them in a list.
+    Species classification parameters taken are final_id, contact, group, group_index, species, species_index.
+    Sound classification parameters taken are nb_calls, med_freq, med_int, i_qual, i_sc, i_buzz.
+    """
+    return line[2:8] + [int(elem) for elem in line[17:]]
 
 
 # Time conversion functions
