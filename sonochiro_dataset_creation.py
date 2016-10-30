@@ -37,14 +37,6 @@ def extract_tr_d_cf(filename):
     return transect, detector, comp_fl
 
 
-def extract_species_sound(line):
-    """Extract all classification parameters from splitted sonochiro output line and return them in a list.
-    Species classification parameters taken are final_id, contact, group, group_index, species, species_index.
-    Sound classification parameters taken are nb_calls, med_freq, med_int, i_qual, i_sc, i_buzz.
-    """
-    return line[2:8] + [int(elem) for elem in line[17:]]
-
-
 # Time conversion functions
 
 
@@ -183,7 +175,8 @@ def load_sonochiro_file(sonochiro_file):
                 excluded_total += 1
                 continue
             entry = [filename, transect, site, colour, night, total_time_sec, detector, comp_fl]
-            entry.extend(extract_species_sound(line))
+            entry.extend(line[2:8])  # add species classification parameters
+            entry.extend([int(elem) for elem in line[17:]])  # add sound classification parameters as int
             sonochiro_array.append(entry)
     name_of_column = ['filename', 'transect', 'site', 'colour', 'night', 'total_time_sec', 'detector', 'comp_fl',
                       'final_id', 'contact', 'group', 'group_index', 'species', 'species_index',
