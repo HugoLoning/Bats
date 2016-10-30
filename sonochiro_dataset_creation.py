@@ -12,8 +12,7 @@ import time
 
 def is_valid_filename(filename):
     """Check whether supplied filename is one of the two common types, not an abberation or header, return bool"""
-    match = re.search(r'([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])_[0-9]+|'
-                      r'([a-zA-Z][a-zA-Z][a-zA-Z]([a-zA-Z])*?20[0-9][0-9])', filename)
+    match = re.search(r'([0-9]{8})_[0-9]+|([a-zA-Z]{3}([a-zA-Z])*?20[0-9]{2})', filename)
     if match is None or filename.startswith("20130827"):  # wrong filename or the rename mistake at 2013-8-27
         return False
     return True
@@ -21,7 +20,7 @@ def is_valid_filename(filename):
 
 def extract_time(filename):
     """Extract time parameters of a filename and return a list containing ymdhms"""
-    match = re.search(r'([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])_([0-9][0-9])([0-9][0-9])([0-9][0-9])', filename)
+    match = re.search(r'([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{2})([0-9]{2})([0-9]{2})', filename)
     return [int(elem) for elem in match.group(1, 2, 3, 4, 5, 6)]
 
 
@@ -93,8 +92,7 @@ def load_transects_array():
     transects = defaultdict(list)
     with open("transects.csv") as input_file:
         for line in input_file:
-            match = re.search(r'([0-9]+),([0-9]+),(.+?),([a-z]+),([0-9]+?)-([0-9]+?)-([0-9]+?)\n', line)
-            transect, site, colour = [elem.isdigit() and int(elem) or elem for elem in match.group(1, 2, 4)]
+            transect, site, name, colour = [elem.isdigit() and int(elem) or elem for elem in line.split(',')[:4]]
             transects[transect].extend([site, colour])
     return dict(transects)
 
@@ -104,8 +102,7 @@ def load_sun_data_array():
     sun_data = []
     with open("SunData.csv") as input_file:
         for line in input_file:
-            match = re.search(r'([0-9]+)/([0-9]+)/([0-9]+) ([0-9]+):([0-9]+):([0-9]+),'
-                              r'[0-9]+/[0-9]+/[0-9]+ ([0-9]+):([0-9]+):([0-9]+)\n', line)
+            match = re.search(r'(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+),\d+/\d+/\d+ (\d+):(\d+):(\d+)\n', line)
             year, month, day, dawn_h, dawn_m, dawn_s, dusk_h, dusk_m, dusk_s = [int(elem) for elem in
                                                                                 match.group(3, 1, 2, 4, 5, 6, 7, 8, 9)]
             dawn_in_sec = dawn_h * 3600 + dawn_m * 60 + dawn_s

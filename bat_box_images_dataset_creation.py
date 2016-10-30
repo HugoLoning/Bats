@@ -9,8 +9,7 @@ import time
 
 def extract_info(filename):
     """Return a list with all relevant info of filename in imagej output context"""
-    match = re.search(r'tr([0-9]+)_k([0-9]+)_([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])'
-                      r'_[0-9]+_IMG_[0-9]+_(oval|particles)\.csv', filename)
+    match = re.search(r'tr(\d+)_k(\d+)_(\d{4})(\d{2})(\d{2})_\d+_IMG_\d+_(oval|particles)\.csv', filename)
     return [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in match.group(1, 2, 3, 4, 5, 6)]
 
 
