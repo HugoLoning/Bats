@@ -2,9 +2,13 @@
 By Hugo Loning 2016
 """
 
-from sonochiro_dataset_creation import convert_to_sec, load_sun_data_array, lookup_sun_data_array, write_array
-from collections import defaultdict
 import time
+from collections import defaultdict
+
+from helper.load_info import load_sun_data, lookup_sun_data
+from helper.time_conversion import convert_to_sec
+from helper.write_data import write_array
+
 
 # The functions
 
@@ -61,14 +65,14 @@ def create_empty_comparison_dict(jip_sc_array, sec_per_unit):
     of supplied jip_sc_array, taking into account the seconds per unit. Return this dictionary.
     """
     entry_dict = find_num_of_entries_per_transect(jip_sc_array, sec_per_unit)
-    sun_data = load_sun_data_array()
+    sun_data = load_sun_data()
     empty_dict = defaultdict(list)
     for transect in entry_dict:
         start_time = entry_dict[transect][0]
         entries_needed = entry_dict[transect][1]
         for entry_num in range(entries_needed):
             curr_time = start_time + entry_num * sec_per_unit
-            night = lookup_sun_data_array(sun_data, curr_time)
+            night = lookup_sun_data(sun_data, curr_time)
             empty_dict[transect].append([transect, night, curr_time, 0, 0, 0, 0])
     return empty_dict
 

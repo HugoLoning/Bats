@@ -2,9 +2,11 @@
 By Hugo Loning 2016
 """
 
-from sonochiro_dataset_creation import load_transects_array, write_array
 import re
 import time
+
+from helper.load_info import load_transects
+from helper.write_data import write_array
 
 
 def extract_info(filename):
@@ -44,7 +46,7 @@ def create_imagej_dataset(imagej_file):
                     ij_dataset[entry][6] += row[5]
 
     # add additional info per measurement
-    tr_array = load_transects_array()
+    tr_array = load_transects()
     final_ij_dataset = []
     for row in ij_dataset:
         transect, box, year, month, day, tot_pix, poo_pix = row

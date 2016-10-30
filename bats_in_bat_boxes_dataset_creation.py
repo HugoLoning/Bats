@@ -2,12 +2,13 @@
 Be sure to use python3 when running this code. By Hugo Loning 2016
 """
 
-from sonochiro_dataset_creation import load_transects_array, write_array
+from helper.load_info import load_transects
+from helper.write_data import write_array
 
 
 def load_bats_in_boxes_file(filename):
     """Return bats dataset array of specified file including transect information"""
-    tr_array = load_transects_array()
+    tr_array = load_transects()
     bats_array = []
     with open(filename) as bats_file:
         for line in bats_file:

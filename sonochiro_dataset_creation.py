@@ -2,12 +2,12 @@
 Light on Nature project. By Hugo Loning, 2016
 """
 
-from collections import defaultdict
 import re
 import time
 
-
-# SonoChiro output line regular expression functions
+from helper.load_info import load_transects, load_sun_data, lookup_sun_data, load_allowed_nights, load_lights_off
+from helper.time_conversion import convert_to_sec
+from helper.write_data import write_array
 
 
 def is_valid_filename(filename):
@@ -37,121 +37,14 @@ def extract_tr_d_cf(filename):
     return transect, detector, comp_fl
 
 
-# Time conversion functions
-
-
-def is_leap_year(year):
-    """Check whether year is a leap year, return bool"""
-    is_leap = False
-    if year % 4 == 0:
-        is_leap = True
-        if year % 100 == 0:
-            is_leap = False
-            if year % 400 == 0:
-                is_leap = True
-    return is_leap
-
-
-def convert_to_sec(year, month, day, hour, minute, second):
-    """Convert ymdhms into seconds from 1st January 2000 00:00 AM, return int"""
-    total_sec = 0
-    # calculate seconds for all but last year
-    for yr in range(2000, year):
-        total_sec += 365 * 24 * 3600
-        if is_leap_year(yr):
-            total_sec += 24 * 3600
-    # only current year calculation remaining
-    month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    if is_leap_year(year):
-        month_days[1] = 29
-    if month > 1:
-        for mon in range(month - 1):
-            total_sec += month_days[mon] * 24 * 3600
-    # only current month calculation remaining
-    total_sec += (day - 1) * 24 * 3600 + hour * 3600 + minute * 60 + second
-    return total_sec
-
-
-# Helper file loading + lookup functions
-
-
-def load_transects_array():
-    """Return a dictionary (transects:[site,colour]) of the transects.csv file which should be in the same directory"""
-    transects = defaultdict(list)
-    with open("transects.csv") as input_file:
-        for line in input_file:
-            transect, site, name, colour = [elem.isdigit() and int(elem) or elem for elem in line.split(',')[:4]]
-            transects[transect].extend([site, colour])
-    return dict(transects)
-
-
-def load_sun_data_array():
-    """Return a list containing converted time of noon of the SunData.csv file which should be in the same directory"""
-    sun_data = []
-    with open("SunData.csv") as input_file:
-        for line in input_file:
-            match = re.search(r'(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+),\d+/\d+/\d+ (\d+):(\d+):(\d+)\n', line)
-            month, day, year, dawn_h, dawn_m, dawn_s, dusk_h, dusk_m, dusk_s = [int(elem) for elem in match.groups()]
-            dawn_in_sec = dawn_h * 3600 + dawn_m * 60 + dawn_s
-            dusk_in_sec = dusk_h * 3600 + dusk_m * 60 + dusk_s
-            noon_in_sec = (dawn_in_sec + dusk_in_sec) // 2  # this is floor division (so we get int back)
-            noon_h = noon_in_sec // 3600
-            noon_m = (noon_in_sec - noon_h * 3600) // 60
-            noon_s = noon_in_sec - noon_h * 3600 - noon_m * 60
-            noon_converted_to_sec = convert_to_sec(year, month, day, noon_h, noon_m, noon_s)
-            sun_data.append(noon_converted_to_sec)  # make entry in array
-    return sun_data
-
-
-def lookup_sun_data_array(sun_data_array, converted_entry):
-    """Lookup which night since 1st January 2012 belongs to ymdhms converted to sec entered, return int.
-    First night in sun_data_array is 31th Dec 2011."""
-    for night, sun_data_entry in enumerate(sun_data_array):
-        if converted_entry < sun_data_entry:
-            return night
-
-
-def load_allowed_nights():
-    """Return a dictionary (site:allowed nights) as values of the 2012-2016allowednights.csv file
-    which should be in the same directory.
-    """
-    allowed = defaultdict(list)  # create a dictionary with an empty list for every key
-    with open("2012-2016_allowednights.csv") as input_file:
-        for line in input_file:
-            site, night = [int(elem) for elem in line.split(",")[:2]]
-            allowed[site].append(night)
-    return dict(allowed)
-
-
-def load_lights_off(sun_data_array):
-    """Return a dictionary (site:nights with lights off) of the loglightsoff.csv file which should
-    be in the same directory.
-    """
-    site_codes = {'lbh': [1], 'vst': [2], 'rko': [3], 'ask': [4, 5], 'kla': [6, 7], 'hkv': [8]}
-    light_off = defaultdict(list)  # create dictionary with for each entry an empty list
-    with open("loglightsoff.csv") as input_file:
-        for line in input_file:
-            date, site_code, lights, remarks = line.strip().split(",")
-            if lights == 'off':  # only execute code if the lights were off
-                month, day, year = [int(elem) for elem in date.split("/")]
-                converted = convert_to_sec(year, month, day, 23, 0, 0)
-                night = lookup_sun_data_array(sun_data_array, converted)
-                for site in site_codes[site_code]:
-                    light_off[site].append(night)
-    return dict(light_off)
-
-
-# Main loading and writing function
-
-
 def load_sonochiro_file(sonochiro_file):
     """Load a sonochiro output file to a complete dataset array with all important information available.
     Return a tuple of length 4 with the array, header names as list, dictionary with skipped entries and count
     as int of files excluded because they were not recorded during an allowed night or the lights were off.
     """
-    sun_data = load_sun_data_array()
+    sun_data = load_sun_data()
     lights_off = load_lights_off(sun_data)
-    tr_array = load_transects_array()
+    tr_array = load_transects()
     allowed_nights = load_allowed_nights()
     sonochiro_array = []
     skip_dict = {}  # keep track of entries skipped, using linecounter
@@ -168,7 +61,7 @@ def load_sonochiro_file(sonochiro_file):
                 continue
             year, month, day, hour, minute, second = extract_time(filename)
             total_time_sec = convert_to_sec(year, month, day, hour, minute, second)
-            night = lookup_sun_data_array(sun_data, total_time_sec)
+            night = lookup_sun_data(sun_data, total_time_sec)
             transect, detector, comp_fl = extract_tr_d_cf(filename)
             site, colour = tr_array[transect]
             if night not in allowed_nights[site] or night in lights_off[site]:
@@ -182,14 +75,6 @@ def load_sonochiro_file(sonochiro_file):
                       'final_id', 'contact', 'group', 'group_index', 'species', 'species_index',
                       'nb_calls', 'med_freq', 'med_int', 'i_qual', 'i_sc', 'i_buzz']
     return sonochiro_array, name_of_column, skip_dict, excluded_total
-
-
-def write_array(array, header_names, output_file):
-    """Write a two-dimensional array with header made from header_names to a specified csv file"""
-    with open(output_file, "w") as output:
-        output.write(",".join(header_names) + "\n")  # write header
-        for row in array:
-            output.write(",".join([str(element) for element in row]) + "\n")  # write rows
 
 
 # The actual script is here

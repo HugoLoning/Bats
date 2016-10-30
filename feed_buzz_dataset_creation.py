@@ -2,9 +2,12 @@
 By Hugo Loning 2016
 """
 
-from sonochiro_dataset_creation import load_sonochiro_file, load_transects_array, write_array
-from collections import defaultdict
 import time
+from collections import defaultdict
+
+from helper.load_info import load_transects
+from helper.write_data import write_array
+from sonochiro_dataset_creation import load_sonochiro_file
 
 
 def filter_sonochiro_array(sonochiro_array, filter_id="PippiT"):
@@ -25,7 +28,7 @@ def find_nights_per_site(sonochiro_array):
 
 def create_empty_fb_dict(nights_dict):
     """Return a dict with per transect an entry for each night, total and feeding buzz initialised at 0"""
-    tr_array = load_transects_array()
+    tr_array = load_transects()
     fb_dict = defaultdict(list)
     for transect in tr_array:
         site, colour = tr_array[transect]
