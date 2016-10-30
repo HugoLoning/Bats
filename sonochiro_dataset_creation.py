@@ -12,7 +12,7 @@ import time
 
 def is_valid_filename(filename):
     """Check whether supplied filename is one of the two common types, not an abberation or header, return bool"""
-    match = re.search(r'([0-9]{8})_[0-9]+|([a-zA-Z]{3}([a-zA-Z])*?20[0-9]{2})', filename)
+    match = re.search(r'(\d{8}_\d+)|([a-zA-Z]{3}[a-zA-Z]*?20\d{2})', filename)
     if match is None or filename.startswith("20130827"):  # wrong filename or the rename mistake at 2013-8-27
         return False
     return True
@@ -20,23 +20,20 @@ def is_valid_filename(filename):
 
 def extract_time(filename):
     """Extract time parameters of a filename and return a list containing ymdhms"""
-    match = re.search(r'([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{2})([0-9]{2})([0-9]{2})', filename)
-    return [int(elem) for elem in match.group(1, 2, 3, 4, 5, 6)]
+    return [int(elem) for elem in re.search(r'(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})', filename).groups()]
 
 
 def extract_tr_d_cf(filename):
     """Extracts transect, detector and compact flash card from filename and return a tuple.
     Corrected for all present (September 2016) typos and periphery experiment 2012 data.
     """
-    # one typo with transect indicated as tr_## instead of tr##;
-    # periphery experiment has an additional c or C which will not be written to output dataset
-    transect = int(re.search(r'tr[_]*?([0-9]+)[cC]*?_', filename).group(1))
-    detector_match = re.search(r'd([0-9]+)_', filename)
-    if detector_match is not None:  # there is a typo where detector is indicated as number without d in front of it
-        detector = int(detector_match.group(1))
-    else:
-        detector = int(re.search(r'tr[0-9]+_([0-9]+)_cf', filename).group(1))
-    comp_fl = re.search(r'cf([0-9]+[aA]*?)_', filename).group(1)  # one flash card has an 'a' at the end of the number
+    transect = int(re.search(r'tr[_]*?(\d+)[cC]*?_', filename).group(1))
+    # one typo with transect indicated as tr_## instead of tr##, periphery experiment has an additional c or C
+    try:  # there is a typo where detector is indicated as number without d in front of it
+        detector = int(re.search(r'd(\d+)_', filename).group(1))
+    except AttributeError:  # if the typo is present, re.search will return None and None doesn't have group method
+        detector = int(re.search(r'tr\d+_(\d+)_cf', filename).group(1))
+    comp_fl = re.search(r'cf(\d+[aA]*?)_', filename).group(1)  # one flash card has an 'a' at the end of the number
     return transect, detector, comp_fl
 
 
@@ -103,8 +100,7 @@ def load_sun_data_array():
     with open("SunData.csv") as input_file:
         for line in input_file:
             match = re.search(r'(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+),\d+/\d+/\d+ (\d+):(\d+):(\d+)\n', line)
-            year, month, day, dawn_h, dawn_m, dawn_s, dusk_h, dusk_m, dusk_s = [int(elem) for elem in
-                                                                                match.group(3, 1, 2, 4, 5, 6, 7, 8, 9)]
+            month, day, year, dawn_h, dawn_m, dawn_s, dusk_h, dusk_m, dusk_s = [int(elem) for elem in match.groups()]
             dawn_in_sec = dawn_h * 3600 + dawn_m * 60 + dawn_s
             dusk_in_sec = dusk_h * 3600 + dusk_m * 60 + dusk_s
             noon_in_sec = (dawn_in_sec + dusk_in_sec) // 2  # this is floor division (so we get int back)
