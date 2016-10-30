@@ -13,42 +13,32 @@ import time
 
 def is_valid_filename(filename):
     """Check whether supplied filename is one of the two common types, not an abberation or header, return bool"""
-    filename_matcher = re.compile(r'([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])_[0-9]+|'
-                                  r'([a-zA-Z][a-zA-Z][a-zA-Z]([a-zA-Z])*?20[0-9][0-9])')
-    filename_match = filename_matcher.search(filename)
-    valid = True
-    if filename_match is None or filename.startswith("20130827"):  # wrong filename or the rename mistake at 2013-8-27
-        valid = False
-    return valid
+    match = re.search(r'([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])_[0-9]+|'
+                      r'([a-zA-Z][a-zA-Z][a-zA-Z]([a-zA-Z])*?20[0-9][0-9])', filename)
+    if match is None or filename.startswith("20130827"):  # wrong filename or the rename mistake at 2013-8-27
+        return False
+    return True
 
 
 def extract_time(filename):
     """Extract time parameters of a filename and return a list containing ymdhms"""
-    time_matcher = re.compile(r'([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])_([0-9][0-9])([0-9][0-9])([0-9][0-9])')
-    time_match = time_matcher.search(filename)
-    return [int(elem) for elem in time_match.group(1, 2, 3, 4, 5, 6)]
+    match = re.search(r'([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])_([0-9][0-9])([0-9][0-9])([0-9][0-9])', filename)
+    return [int(elem) for elem in match.group(1, 2, 3, 4, 5, 6)]
 
 
 def extract_tr_d_cf(filename):
     """Extracts transect, detector and compact flash card from filename and return a tuple.
     Corrected for all present (September 2016) typos and periphery experiment 2012 data.
     """
-    tr_matcher = re.compile(r'tr[_]*?([0-9]+)[cC]*?_')
     # one typo with transect indicated as tr_## instead of tr##;
     # periphery experiment has an additional c or C which will not be written to output dataset
-    tr_match = tr_matcher.search(filename)
-    transect = int(tr_match.group(1))
-    d_matcher = re.compile(r'd([0-9]+)_')
-    d_match = d_matcher.search(filename)
-    if d_match is not None:  # there is a typo where detector is indicated as number without d in front of it
-        detector = int(d_match.group(1))
+    transect = int(re.search(r'tr[_]*?([0-9]+)[cC]*?_', filename).group(1))
+    detector_match = re.search(r'd([0-9]+)_', filename)
+    if detector_match is not None:  # there is a typo where detector is indicated as number without d in front of it
+        detector = int(detector_match.group(1))
     else:
-        typo_matcher = re.compile(r'tr[0-9]+_([0-9]+)_cf')
-        typo_match = typo_matcher.search(filename)
-        detector = int(typo_match.group(1))
-    cf_matcher = re.compile(r'cf([0-9]+[aA]*?)_')  # one flash card has an 'a' at the end of the number
-    cf_match = cf_matcher.search(filename)
-    comp_fl = cf_match.group(1)
+        detector = int(re.search(r'tr[0-9]+_([0-9]+)_cf', filename).group(1))
+    comp_fl = re.search(r'cf([0-9]+[aA]*?)_', filename).group(1)  # one flash card has an 'a' at the end of the number
     return transect, detector, comp_fl
 
 
@@ -104,10 +94,9 @@ def load_transects_array():
     transects = []
     with open("transects.csv") as input_file:
         for line in input_file:
-            line_matcher = re.compile(r'([0-9]+),([0-9]+),(.+?),([a-z]+),([0-9]+?)-([0-9]+?)-([0-9]+?)\n')
-            line_match = line_matcher.search(line)
-            transect, site, start_year, start_month, start_day = [int(elem) for elem in line_match.group(1, 2, 5, 6, 7)]
-            name, colour = line_match.group(3, 4)
+            match = re.search(r'([0-9]+),([0-9]+),(.+?),([a-z]+),([0-9]+?)-([0-9]+?)-([0-9]+?)\n', line)
+            transect, site, start_year, start_month, start_day = [int(elem) for elem in match.group(1, 2, 5, 6, 7)]
+            name, colour = match.group(3, 4)
             transects.append([transect, site, name, colour, start_year, start_month, start_day])
     return transects
 
@@ -117,9 +106,8 @@ def load_sun_data_array():
     sun_data = []
     with open("SunData.csv") as input_file:
         for line in input_file:
-            matcher = re.compile(r'([0-9]+)/([0-9]+)/([0-9]+) ([0-9]+):([0-9]+):([0-9]+),'
-                                 + '[0-9]+/[0-9]+/[0-9]+ ([0-9]+):([0-9]+):([0-9]+)\n')
-            match = matcher.search(line)
+            match = re.search(r'([0-9]+)/([0-9]+)/([0-9]+) ([0-9]+):([0-9]+):([0-9]+),'
+                              r'[0-9]+/[0-9]+/[0-9]+ ([0-9]+):([0-9]+):([0-9]+)\n', line)
             year, month, day, dawn_h, dawn_m, dawn_s, dusk_h, dusk_m, dusk_s = [int(elem) for elem in
                                                                                 match.group(3, 1, 2, 4, 5, 6, 7, 8, 9)]
             dawn_in_sec = dawn_h * 3600 + dawn_m * 60 + dawn_s
