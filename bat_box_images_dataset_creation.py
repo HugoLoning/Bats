@@ -5,6 +5,7 @@ By Hugo Loning 2016
 import re
 import time
 
+from helper.combine_output_files import combine_imagej_files
 from helper.load_info import load_transects
 from helper.write_data import write_array
 
@@ -15,25 +16,24 @@ def extract_info(filename):
     return [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in match.groups()]
 
 
-def load_imagej_array(imagej_file):
-    """Return an array representation of specified imagej combined output csv file"""
+def load_imagej_array():
+    """Return an array representation with filename extracted info of combined imagej output"""
+    loaded_array = combine_imagej_files()
     ij_array = []
-    with open(imagej_file) as input_file:
-        for line in input_file:
-            line = line.strip().split(",")
-            filename, curr_area = line[0], int(line[1])
-            transect, box, year, month, day, area_type = extract_info(filename)
-            if box == 75 or box == 78:  # box 75 and 78 are actually 45 and 48
-                box -= 30
-            ij_array.append([transect, box, year, month, day, curr_area, area_type])
+    for line in loaded_array:
+        filename, curr_area = line
+        transect, box, year, month, day, area_type = extract_info(filename)
+        if box == 75 or box == 78:  # box 75 and 78 are actually 45 and 48
+            box -= 30
+        ij_array.append([transect, box, year, month, day, int(curr_area), area_type])
     return ij_array
 
 
-def create_imagej_dataset(imagej_file):
+def create_imagej_dataset():
     """Return a complete dataset array with total area and area of particles (poo)
-    for each bat box measurement in specified imagej combined output csv file.
+    for each bat box measurement in imagej output files.
     """
-    ij_array = load_imagej_array(imagej_file)
+    ij_array = load_imagej_array()
 
     # get an entry for each measurement, with a 0 for counting all the poo particles' pixels
     ij_dataset = [row[:-1] + [0] for row in ij_array if row[6] == "oval"]
@@ -41,9 +41,9 @@ def create_imagej_dataset(imagej_file):
     # sum all particle areas, all poo, per measurement
     for row in ij_array:
         if row[6] == "particles":
-            for entry in range(len(ij_dataset)):
-                if row[:5] == ij_dataset[entry][:5]:
-                    ij_dataset[entry][6] += row[5]
+            for index, entry in enumerate(ij_dataset):
+                if row[:5] == entry[:5]:  # if it's the same measurement
+                    ij_dataset[index][6] += row[5]
 
     # add additional info per measurement
     tr_array = load_transects()
@@ -60,18 +60,17 @@ def create_imagej_dataset(imagej_file):
 
 # The script is here
 if __name__ == "__main__":
-    # Specify input (to load) and output (to write) file
-    file_to_load = 'imagej_output_all_with_cleaning.csv'
+    # Specify output file
     file_to_write = 'dataset_imagej_improved.csv'
 
     # The script
     print("IMAGEJ OUTPUT DATA CREATION SCRIPT FOR LON BY HUGO LONING 2016\n")
-    print("Creating imagej dataset from " + file_to_load + "...\n")
+    print("Creating imagej dataset from output files...\n")
     start_time1 = time.time()  # measure time to complete program
-    loaded_array, header_names = create_imagej_dataset(file_to_load)
+    loaded, header_names = create_imagej_dataset()
     print("Loaded in %.3f seconds\n" % (time.time() - start_time1))
     print("Writing imagej dataset to " + file_to_write + "...\n")
     start_time2 = time.time()
-    write_array(loaded_array, header_names, file_to_write)
+    write_array(loaded, header_names, file_to_write)
     print("Written in %.3f seconds, total run time %.3f seconds." % (time.time() - start_time2,
                                                                      time.time() - start_time1))

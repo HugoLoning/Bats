@@ -1,0 +1,1 @@
+Put all imagej output files created with the macro in this folder
