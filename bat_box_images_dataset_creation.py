@@ -61,7 +61,7 @@ def create_imagej_dataset():
 # The script is here
 if __name__ == "__main__":
     # Specify output file
-    file_to_write = 'dataset_imagej_improved.csv'
+    file_to_write = 'dataset_imagej.csv'
 
     # The script
     print("IMAGEJ OUTPUT DATA CREATION SCRIPT FOR LON BY HUGO LONING 2016\n")

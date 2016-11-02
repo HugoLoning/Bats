@@ -74,31 +74,30 @@ def create_feeding_buzz_array(sonochiro_array, buzz_index=2):
 
 # The actual script is here
 if __name__ == "__main__":
-    # Specify input (to load) and output (to write) file
-    file_to_load = "sonochiro_output_all.csv"
+    # Specify output file
     file_to_write = "dataset_sonochiro_feeding_buzz.csv"
 
     # The script
     print("SONOCHIRO FEEDING BUZZ DATA CREATION SCRIPT FOR LON BY HUGO LONING 2016\n")
-    print("Loading " + file_to_load + "...\n")
-    start_time1 = time.time()  # measure time to complete program
-    sc, cn, skipped, excluded = load_sonochiro_file(file_to_load)  # cn will not be used
+    print("Loading sonochiro output files...\n")
+    start1 = time.time()  # measure time to complete program
+    sc, cn, skipped, excluded = load_sonochiro_file()  # cn will not be used
     print("Loaded in %.3f seconds, of %d total entries, %d entries were unusable\n"
           "and skipped, %d entries were in nights that did not have all detectors\n"
-          "running and were excluded.\n" % (time.time() - start_time1, len(sc) + len(skipped) + excluded,
+          "running and were excluded.\n" % (time.time() - start1, len(sc) + len(skipped) + excluded,
                                             len(skipped), excluded))
     print("Filtering out all but common pippistrelle entries...\n")
-    start_time2 = time.time()
+    start2 = time.time()
     filtered = filter_sonochiro_array(sc)
-    print("Filtered in %.3f seconds, %d entries were filtered out.\n" % (time.time()-start_time2,
-                                                                         len(sc)-len(filtered)))
+    print("Filtered in %.3f seconds, %d entries were filtered out.\n" % (time.time() - start2,
+                                                                         len(sc) - len(filtered)))
     print("Creating feeding buzz array...\n")
-    start_time3 = time.time()
+    start3 = time.time()
     fb_arr, names = create_feeding_buzz_array(filtered)
-    print("Created in %.3f seconds.\n" % (time.time() - start_time3))
+    print("Created in %.3f seconds.\n" % (time.time() - start3))
     print("Writing feeding buzz array to " + file_to_write + "...\n")
-    start_time4 = time.time()
+    start4 = time.time()
     write_array(fb_arr, names, file_to_write)
     print("Written in %.3f seconds, total run time %.1f seconds, type \'skipped\' for \n"
-          "a dictionary (line:filename) of the entries skipped during file loading." % (time.time() - start_time4,
-                                                                                        time.time() - start_time1))
+          "a list of the entries (output file, line, filename) skipped during file loading." % (time.time() - start4,
+                                                                                                time.time() - start1))
