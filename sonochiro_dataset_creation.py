@@ -13,7 +13,7 @@ from helper.write_data import write_array
 
 def is_valid_filename(filename):
     """Check whether supplied filename is one of the two common types, not an abberation or header, return bool"""
-    match = re.search(r'(\d{8}_\d+)|([a-zA-Z]{3}[a-zA-Z]*?20\d{2})', filename)
+    match = re.search(r'(\d{8}_\d+)|([a-zA-Z]{3,4}20\d{2})', filename)
     if match is None or filename.startswith("20130827"):  # wrong filename or the rename mistake at 2013-8-27
         return False
     return True
