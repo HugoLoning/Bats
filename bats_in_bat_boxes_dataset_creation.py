@@ -111,7 +111,7 @@ if __name__ == "__main__":
     to_load = 'bats_in_bat_boxes.csv'
     write_bats = 'dataset_bats_in_bat_boxes.csv'
     write_body_measurements = 'dataset_bat_body_measurements.csv'
-    write_sex_counted = 'dataset_bats_sex_counted_dataset.csv'
+    write_sex_counted = 'dataset_bats_sex_counted.csv'
 
     # The script
     print("BATS IN BAT BOXES DATA CREATION SCRIPT FOR LON BY HUGO LONING 2016\n")
