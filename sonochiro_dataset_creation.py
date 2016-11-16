@@ -86,16 +86,16 @@ if __name__ == "__main__":
     # The script
     print("SONOCHIRO DATA CREATION SCRIPT FOR LIGHT ON NATURE BY HUGO LONING 2016\n")
     print("Loading sonochiro output files...\n")
-    start = time.time()  # measure time to complete program
+    t1 = time.time()  # measure time to complete program
     sc, column_names, skipped, excluded = load_sonochiro_file()
-    print("Loaded in %.1f seconds, of %d total entries, %d entries were unusable\n"
-          "and skipped, %d entries were in nights with lights off or in nights that\n"
-          "did not have all detectors running and were excluded.\n" % (time.time() - start,
-                                                                       len(sc) + len(skipped) + excluded,
-                                                                       len(skipped), excluded))
-    print("Writing " + file_to_write + "...\n")
-    start2 = time.time()
+    print("Loaded in {:.1f} seconds, of {} total entries, {} entries were unusable\n"
+          "and skipped, {} entries were in nights with lights off or in nights that\n"
+          "did not have all detectors running and were excluded.\n".format(time.time() - t1,
+                                                                           len(sc) + len(skipped) + excluded,
+                                                                           len(skipped), excluded))
+    print("Writing {}...\n".format(file_to_write))
+    t2 = time.time()
     write_array(sc, column_names, file_to_write)
-    print("Written in %.1f seconds, total run time %.1f seconds, type \'skipped\' for \n"
-          "a list of the entries (output file, line, filename) skipped during file loading." % (time.time() - start2,
-                                                                                                time.time() - start))
+    print("Written in {:.1f} seconds, total run time {:.1f} seconds, type \'skipped\' for \n"
+          "a list of the entries (output file, line, filename) skipped during file loading.".format(time.time() - t2,
+                                                                                                    time.time() - t1))

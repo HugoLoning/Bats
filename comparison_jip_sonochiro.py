@@ -127,16 +127,16 @@ if __name__ == "__main__":
 
     # The script
     print("SONOCHIRO AND JIP COMPARISON DATA CREATION SCRIPT FOR LON BY HUGO LONING 2016\n")
-    print("Loading " + file_to_load + "...\n")
+    print("Loading {}...\n".format(file_to_load))
     start_time1 = time.time()  # measure time to complete program
     loaded_array = array_from_input(file_to_load)
-    print("Loaded in %.3f seconds\n" % (time.time() - start_time1))
+    print("Loaded in {:.3f} seconds\n".format(time.time() - start_time1))
     print("Creating comparison array...\n")
     start_time2 = time.time()
     fb_arr, names = create_comparison_array(loaded_array, minutes_unit, ibuz_th)
-    print("Created in %.3f seconds.\n" % (time.time()-start_time2))
-    print("Writing feeding buzz array to " + file_to_write + "...\n")
+    print("Created in {:.3f} seconds.\n".format(time.time()-start_time2))
+    print("Writing feeding buzz array to {}...\n".format(file_to_write))
     start_time3 = time.time()
     write_array(fb_arr, names, file_to_write)
-    print("Written in %.3f seconds, total run time %.1f seconds." % (time.time() - start_time3,
-                                                                     time.time() - start_time1))
+    print("Written in {:.3f} seconds, total run time {:.1f} seconds.".format(time.time() - start_time3,
+                                                                             time.time() - start_time1))

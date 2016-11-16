@@ -68,9 +68,9 @@ if __name__ == "__main__":
     print("Creating imagej dataset from output files...\n")
     start_time1 = time.time()  # measure time to complete program
     loaded, header_names = create_imagej_dataset()
-    print("Loaded in %.3f seconds\n" % (time.time() - start_time1))
-    print("Writing imagej dataset to " + file_to_write + "...\n")
+    print("Loaded in {:.3f} seconds\n".format(time.time() - start_time1))
+    print("Writing imagej dataset to {}...\n".format(file_to_write))
     start_time2 = time.time()
     write_array(loaded, header_names, file_to_write)
-    print("Written in %.3f seconds, total run time %.3f seconds." % (time.time() - start_time2,
-                                                                     time.time() - start_time1))
+    print("Written in {:.3f} seconds, total run time {:.3f} seconds.".format(time.time() - start_time2,
+                                                                             time.time() - start_time1))
