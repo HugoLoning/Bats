@@ -39,6 +39,8 @@ def find_time_since_end_activity_gap(activity_gap_dict, transect, recording_time
             return recording_time - activity_gap_dict[transect][i-1]
         elif recording_time == gap_end_time:
             return 0
+    else:  # the entry is after the last gap_end_time so will not be found with above for loop
+        return recording_time - activity_gap_dict[transect][-1]
 
 
 def create_bout_analysis_dataset(sonochiro_array, gap_sec, only_pp=True, buzz_index=2):
@@ -65,8 +67,8 @@ def create_bout_analysis_dataset(sonochiro_array, gap_sec, only_pp=True, buzz_in
 
 
 if __name__ == "__main__":
-    file_to_write = "dataset_bout_analysis.csv"
-    gap = 300  # in sec
+    gap = 30  # which amount of seconds is defined as a gap
+    file_to_write = "dataset_bout_analysis_with_{}_second_gaps.csv".format(gap)
 
     start = time.time()
     sc = load_sonochiro_file()[0]
