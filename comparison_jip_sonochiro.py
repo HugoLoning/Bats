@@ -21,7 +21,7 @@ def array_from_input(jip_sc_file):
             if line.startswith("File;"):  # if it's the header
                 continue
             line = line.strip().split(";")
-            line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line]  # convert to int if possible
+            line = [int(elem) if elem.isdigit() else elem for elem in line]  # convert to int if possible
             year, month, day, hour, minute, second = line[2:8]
             line[2:8] = [convert_to_sec(year, month, day, hour, minute, second)]  # replace ymdhms by total in sec's
             array += [line]

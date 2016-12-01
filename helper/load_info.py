@@ -13,7 +13,7 @@ def load_transects():
     transects = defaultdict(list)
     with open(r"helper\transects.csv") as input_file:
         for line in input_file:
-            transect, site, name, colour = [elem.isdigit() and int(elem) or elem for elem in line.split(',')[:4]]
+            transect, site, name, colour = [int(elem) if elem.isdigit() else elem for elem in line.split(',')[:4]]
             transects[transect].extend([site, colour])
     return dict(transects)
 

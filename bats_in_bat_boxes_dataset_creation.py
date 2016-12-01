@@ -15,7 +15,7 @@ def load_bats_in_boxes_file(filename):
             if line.startswith("transect;box"):  # if it's the header
                 continue
             # strip and split the line on ; and convert all possible items into int
-            line = [(elem.isdigit() and [int(elem)] or [elem])[0] for elem in line.strip().split(';')]
+            line = [int(elem) if elem.isdigit() else elem for elem in line.strip().split(';')]
             # convert bat measurements to float
             try:
                 line[9], line[10] = float(line[9]), float(line[10])
