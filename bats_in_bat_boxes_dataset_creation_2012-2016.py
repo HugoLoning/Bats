@@ -95,7 +95,7 @@ if __name__ == "__main__":
     loaded = load_bats_in_boxes_file(to_load)
     print("Loaded {}...\n".format(to_load))
     array, header_names = create_all_year_data(loaded)
-    # write_array(array, header_names, write_bats)
+    write_array(array, header_names, write_bats)
     print("Written bats dataset to {}\n".format(write_bats))
     sc_array, sc_header = create_sex_counted_array(loaded)
     write_array(sc_array, sc_header, write_sex_counted)
