@@ -89,7 +89,7 @@ def create_sex_counted_array(bats_array):
     """Return a dataset array with counted bats of which sex is known, also return header names"""
     sex_counted_dict = {}
     for row in bats_array:
-        site, transect, colour, *rest, species, sex = row[:11]
+        site, transect, box, colour, *rest, species, sex = row[:11]
         if transect not in sex_counted_dict:
             sex_counted_dict[transect] = [transect, site, colour, 0, 0]
         if sex == 'male' and species == 'pp':  # count males
